@@ -30,6 +30,6 @@ Input is provided via two text files in the subdirectory `input/` that are `#inc
 
 Compile the program with your favorite C++20 compliant compiler, and run the program to print out the first solution found.
 Note: You will probably need to increase the maximum template instantiation depth when compiling. For gcc, it's `-ftemplate-depth=100000`.
-Thanks to lazy evaluation, full size (i.e. five-card) puzzles are supported and can be solved fairly quickly.
+Thanks to lazy evaluation, full size (i.e. five-card) puzzles are supported and can sometimes be solved fairly quickly, depending on the puzzle.
 
 If you get a compilation error, you most likely didn't set the maximum template depth high enough.
