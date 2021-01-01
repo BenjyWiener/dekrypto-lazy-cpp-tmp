@@ -92,18 +92,12 @@ using solve = filter<flatten<map<permute<Cards>,
                      is_solution_predicate<Goal>::template apply>;
 
 int main() {
-    //     print_solution<solve<generator_box_list<
-    // #include "./input/cards.txt"
-    //                              >,
-    // #include "./input/goal.txt"
-    //                          >>();
-
     using solutions = solve<generator_box_list<
 #include "./input/cards.txt"
-                               >,
+                                >,
 #include "./input/goal.txt"
-                           >;
-    
+                            >;
+
     std::cout << solutions_to_char_pack<solutions>::to_string<> << '\n';
 
     return 0;
