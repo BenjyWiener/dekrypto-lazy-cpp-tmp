@@ -2,153 +2,55 @@
 
 #include <iostream>
 
+#include "char_pack.hpp"
 #include "expression.hpp"
 #include "generator.hpp"
 
-namespace detail {
-
-struct non_constructable {
-    non_constructable() = delete;
-};
-
-template <generator::Generator G>
-struct print_all_impl : non_constructable {
-    static inline void f() {
-        std::cout << G::value::value << ' ';
-        print_all_impl<typename G::next<>>::f();
-    }
-};
-
-template <generator::ExhaustedGenerator G>
-struct print_all_impl<G> : non_constructable {
-    static inline void f() { std::cout << std::endl; }
-};
-
-template <generator::Generator G>
-inline void print_all() { print_all_impl<G>::f(); }
-
-template <generator::Generator G>
-struct print_all_2d_impl : non_constructable {
-    static inline void f() {
-        print_all<typename G::value>();
-        print_all_2d_impl<typename G::next<>>::f();
-    }
-};
-
-template <generator::ExhaustedGenerator G>
-struct print_all_2d_impl<G> : non_constructable {
-    static inline void f() { std::cout << std::endl; }
-};
-
-template <generator::Generator G>
-inline void print_all_2d() { print_all_2d_impl<G>::f(); }
-
-template <generator::Generator G>
-struct print_all_pairs_impl : non_constructable {
-    static inline void f() {
-        print_all<typename G::value::first>();
-        print_all<typename G::value::second>();
-        std::cout << std::endl;
-        print_all_pairs_impl<typename G::next<>>::f();
-    }
-};
-
-template <generator::ExhaustedGenerator G>
-struct print_all_pairs_impl<G> : non_constructable {
-    static inline void f() {}
-};
-
-template <generator::Generator G>
-inline void print_all_pairs() { print_all_pairs_impl<G>::f(); }
-
 template <operation Op>
-struct show_op_impl;
+struct op_to_char_pack;
 
 template <>
-struct show_op_impl<add> {
-    static constexpr const char *value = " + ";
-};
+struct op_to_char_pack<add> : char_pack<' ', '+', ' '> {};
 
 template <>
-struct show_op_impl<subtract> {
-    static constexpr const char *value = " - ";
-};
+struct op_to_char_pack<subtract> : char_pack<' ', '-', ' '> {};
 
 template <>
-struct show_op_impl<multiply> {
-    static constexpr const char *value = " * ";
-};
+struct op_to_char_pack<multiply> : char_pack<' ', '*', ' '> {};
 
 template <>
-struct show_op_impl<divide> {
-    static constexpr const char *value = " / ";
-};
+struct op_to_char_pack<divide> : char_pack<' ', '/', ' '> {};
 
-template <operation Op>
-constexpr const char *show_op = show_op_impl<Op>::value;
+template <Expr>
+struct expr_to_char_pack;
 
 template <Expr E>
-struct print_expr_impl : non_constructable {
-    static inline void f() {
-        std::cout << '(';
-        print_expr_impl<typename E::lhs>::f();
-        std::cout << show_op<E::op>;
-        print_expr_impl<typename E::rhs>::f();
-        std::cout << ')';
-    }
-};
+struct expr_to_char_pack : char_pack<'('>::concat<
+                           typename expr_to_char_pack<typename E::lhs>::self>::concat<
+                           typename op_to_char_pack<E::op>::self>::concat<
+                           typename expr_to_char_pack<typename E::rhs>::self>::append<
+                           ')'>::self {};
 
 template <Term T>
-struct print_expr_impl<T> : non_constructable {
-    static inline void f() { std::cout << T::value; }
-};
+struct expr_to_char_pack<T> : int_to_char_pack<T::value>::self {};
 
 template <Expr E>
-inline void print_expr() {
-    print_expr_impl<E>::f();
-    std::cout << " = " << E::evaluated::as_double << std::endl;
-};
+struct solution_to_char_pack : expr_to_char_pack<E>::append<' ', '=', ' '>::concat<typename int_to_char_pack<E::evaluated::num>::self> {};
 
-template <generator::Generator G>
-struct print_all_exprs_impl : non_constructable {
-    static inline void f() {
-        print_expr<typename G::value>();
-        print_all_exprs_impl<typename G::next<>>::f();
-    }
-};
+template <generator::Generator Solutions, int N = 1, bool IsFirst = true>
+struct solutions_to_char_pack : solution_to_char_pack<typename Solutions::value>::concat<typename solutions_to_char_pack<typename Solutions::next<>, N - 1, false>::self> {};
 
-template <generator::ExhaustedGenerator G>
-struct print_all_exprs_impl<G> : non_constructable {
-    static inline void f() {
-        std::cout << std::endl;
-    }
-};
+template <generator::Generator Solutions, int N>
+requires(N > 0)
+struct solutions_to_char_pack<Solutions, N, false> : char_pack<'\n'>::concat<typename solution_to_char_pack<typename Solutions::value>::self>::concat<typename solutions_to_char_pack<typename Solutions::next<>, N - 1, false>::self> {};
 
-template <generator::Generator G>
-inline void print_all_exprs() { print_all_exprs_impl<G>::f(); }
+template <generator::Generator Solutions, bool IsFirst>
+struct solutions_to_char_pack<Solutions, 0, IsFirst> : char_pack<> {};
 
-template <generator::Generator Solutions>
-struct print_solution_impl : non_constructable {
-    static inline void f() {
-        print_expr<typename Solutions::value>();
-    }
-};
+template <generator::ExhaustedGenerator Solutions, int N>
+requires(N > 0)
+struct solutions_to_char_pack<Solutions, N, true> : char_pack<'N', 'o', ' ', 's', 'o', 'l', 'u', 't', 'i', 'o', 'n', 's', ' ', 'f', 'o', 'u', 'n', 'd', '.'> {};
 
-template <generator::ExhaustedGenerator Solutions>
-struct print_solution_impl<Solutions> : non_constructable {
-    static inline void f() {
-        std::cout << "No solutions found." << std::endl;
-    }
-};
-
-template <generator::Generator Solutions>
-inline void print_solution() { print_solution_impl<Solutions>::f(); }
-
-}  // namespace detail
-
-using ::detail::print_all;
-using ::detail::print_all_2d;
-using ::detail::print_all_exprs;
-using ::detail::print_all_pairs;
-using ::detail::print_expr;
-using ::detail::print_solution;
+template <generator::ExhaustedGenerator Solutions, int N>
+requires(N > 0)
+struct solutions_to_char_pack<Solutions, N, false> : char_pack<> {};

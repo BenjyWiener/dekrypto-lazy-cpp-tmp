@@ -122,7 +122,8 @@ template <Generator G, template <typename> class Predicate>
 struct filter : filter<typename G::next<>, Predicate> {};
 
 template <Generator G, template <typename> class Predicate>
-requires(Predicate<typename G::value>::value) struct filter<G, Predicate> {
+requires(Predicate<typename G::value>::value)
+struct filter<G, Predicate> {
     using value = G::value;
 
     template <typename...>
