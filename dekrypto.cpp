@@ -98,7 +98,7 @@ int main() {
 #include "./input/goal.txt"
                             >;
 
-    std::cout << solutions_to_char_pack<solutions>::to_string<> << '\n';
+    std::cout << solutions_to_char_pack<solutions>::to_string << '\n';
 
     return 0;
 }
